@@ -1,7 +1,7 @@
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import Card from '../ui/Card'
-import { HINT_LEVEL_DESCRIPTIONS, HINT_LEVEL_NAMES } from '../../content/labels'
+import { HINT_LEVEL_DESCRIPTIONS, HINT_LEVEL_NAMES, responseModeLabel } from '../../content/labels'
 import type { HintLevel, MentorHint } from '../../types/domain'
 
 type Props = {
@@ -21,7 +21,10 @@ export default function MentorResponse({ currentLevel, hints, nextLevel, onReque
 
   return (
     <Card tone="white" big className="mentor-says" aria-live="polite">
-      <Badge tone="pink">Mentor · Level {currentLevel}</Badge>
+      <div className="mentor-says__badges">
+        <Badge tone="pink">Mentor · Level {currentLevel}</Badge>
+        {latest?.responseMode && <Badge tone="yellow">{responseModeLabel(latest.responseMode)}</Badge>}
+      </div>
       <h2 className="section-title">{HINT_LEVEL_NAMES[currentLevel]}</h2>
 
       {latest ? (
@@ -64,7 +67,6 @@ export default function MentorResponse({ currentLevel, hints, nextLevel, onReque
         </details>
       )}
 
-      <p className="note mentor-says__demo">Illustrative mentor content. The AI mentor is not connected yet.</p>
     </Card>
   )
 }

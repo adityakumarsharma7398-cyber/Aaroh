@@ -27,10 +27,12 @@ export default function TaskSummaryCard({ task, to, eyebrow = "Today's focus" }:
             <dt>Status</dt>
             <dd><Badge tone="yellow">{TASK_STATUS_LABELS[task.status]}</Badge></dd>
           </div>
-          <div>
-            <dt>Estimated effort</dt>
-            <dd>{formatMinutes(task.estimatedMinutes)}</dd>
-          </div>
+          {task.estimatedMinutes !== undefined && (
+            <div>
+              <dt>Estimated effort</dt>
+              <dd>{formatMinutes(task.estimatedMinutes)}</dd>
+            </div>
+          )}
         </dl>
         <Button to={to} variant="action" size="lg" arrow>Open Task</Button>
       </div>

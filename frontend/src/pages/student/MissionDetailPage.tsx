@@ -48,7 +48,7 @@ export default function MissionDetailPage() {
             <div className="mission-detail">
               <Card tone="softOrange" big>
                 <Badge tone="orange">The small action</Badge>
-                <p className="mission-detail__action">{mission.action}</p>
+                {mission.action && <p className="mission-detail__action">{mission.action}</p>}
                 <p className="note">{DIMENSION_DESCRIPTIONS[mission.dimension]}</p>
                 {completed ? null : (
                   <Button to={studentRoutes.missionAttempt(mission.id)} variant="action" size="lg" arrow>

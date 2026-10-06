@@ -101,3 +101,17 @@ export const ATTENTION_LABELS: Record<AttentionKind, string> = {
   'inactive-work': 'Inactive academic work',
   'observation-needed': 'Teacher observation needed',
 }
+
+/** How the server gave a piece of guidance (the backend's `responseMode`). Unknown modes fall back to readable text. */
+const RESPONSE_MODE_LABELS: Record<string, string> = {
+  independent_thinking_pushback: 'Think it through first',
+  reflective_prompt: 'Reflective prompt',
+  conceptual_hint: 'Conceptual hint',
+  structured_guidance: 'Structured guidance',
+  worked_example: 'Worked example',
+  direct_solution: 'Direct solution',
+}
+
+export function responseModeLabel(mode: string): string {
+  return RESPONSE_MODE_LABELS[mode] ?? mode.replace(/_/g, ' ')
+}

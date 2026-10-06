@@ -63,9 +63,3 @@ export const seedHints: MentorHint[] = [1, 2].map((level) => ({
   level: level as HintLevel,
   content: hintContent('task-1', '', '', level as HintLevel),
 }))
-
-export const REFLECTION_PROMPTS: string[] = [
-  'What was difficult about this task?',
-  'What did you try before asking for help?',
-  'What would you do differently next time?',
-]

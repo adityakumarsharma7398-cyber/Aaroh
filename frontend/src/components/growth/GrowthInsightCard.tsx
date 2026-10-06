@@ -8,7 +8,7 @@ export default function GrowthInsightCard({ insight }: { insight: GrowthInsight 
       <Badge tone="pink">Growth insight</Badge>
       <h2 className="section-title">One thing to notice</h2>
       <p className="insight__text">{insight.observation}</p>
-      <p className="note">Illustrative content until live data is connected.</p>
+      <p className="note">Based on your recorded actions.</p>
     </Card>
   )
 }

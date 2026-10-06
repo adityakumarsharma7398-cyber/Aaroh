@@ -10,6 +10,7 @@ import TaskContextBanner from '../../components/tasks/TaskContextBanner'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import { studentRoutes } from '../../config/routes'
+import { actionMessage } from '../../lib/errors'
 import { nextHintLevel } from '../../lib/mentor'
 import { mentorService } from '../../services/mentorService'
 import type { MentorSession, Task, TaskAttempt } from '../../types/domain'
@@ -34,8 +35,8 @@ function MentorView({ task, session, attempts, reload }: MentorProps) {
     try {
       await mentorService.requestHint(task.id)
       reload()
-    } catch {
-      setError('We could not get guidance just now. Please try again.')
+    } catch (err) {
+      setError(actionMessage(err, 'We could not get guidance just now. Please try again.'))
     } finally {
       setRequesting(false)
     }

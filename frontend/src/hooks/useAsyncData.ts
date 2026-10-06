@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-export type AsyncState<T> = { status: 'loading' } | { status: 'error' } | { status: 'ready'; data: T }
+export type AsyncState<T> = { status: 'loading' } | { status: 'error'; error: unknown } | { status: 'ready'; data: T }
 export type AsyncResult<T> = AsyncState<T> & { reload: () => void }
 
 /**
@@ -28,8 +28,8 @@ export function useAsyncData<T>(load: () => Promise<T>, key = ''): AsyncResult<T
       .then((data) => {
         if (!cancelled) setState({ status: 'ready', data })
       })
-      .catch(() => {
-        if (!cancelled) setState({ status: 'error' })
+      .catch((error: unknown) => {
+        if (!cancelled) setState({ status: 'error', error })
       })
     return () => {
       cancelled = true

@@ -18,11 +18,11 @@ export interface TodayData {
 async function loadToday(): Promise<TodayData> {
   const student = await studentService.getCurrentStudent()
   const [task, mission, events, signals, insight] = await Promise.all([
-    taskService.getCurrentTask(student.id),
-    missionService.getCurrentMission(student.id),
-    evidenceService.listRecentEvents(student.id, 5),
-    growthService.listSignals(student.id),
-    growthService.getLatestInsight(student.id),
+    taskService.getMyCurrentTask(),
+    missionService.getCurrentMission(),
+    evidenceService.listMyRecentEvents(5),
+    growthService.listMySignals(),
+    growthService.getMyInsight(),
   ])
   return { student, task, mission, events, signals, insight }
 }

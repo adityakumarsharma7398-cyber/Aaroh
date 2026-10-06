@@ -1,7 +1,14 @@
 // Pure view helpers for evidence. The backend creates and interprets evidence;
 // these only format and group what has already been loaded.
 import { EVIDENCE_EVENT_LABELS, HINT_LEVEL_NAMES } from '../content/labels'
-import type { DevelopmentDimension, DevelopmentSignal, EvidenceEvent, HintLevel, TaskAttempt } from '../types/domain'
+import type {
+  DevelopmentDimension,
+  DevelopmentSignal,
+  EvidenceEvent,
+  EvidenceRecord,
+  HintLevel,
+  TaskAttempt,
+} from '../types/domain'
 
 export function describeEvent(event: EvidenceEvent): string {
   const base = EVIDENCE_EVENT_LABELS[event.type]
@@ -23,6 +30,18 @@ export function dimensionsByEvent(signals: DevelopmentSignal[]): Record<string, 
     for (const id of signal.evidenceEventIds) {
       if (!map[id]) map[id] = []
       map[id].push(signal.dimension)
+    }
+  }
+  return map
+}
+
+/** Which dimensions each event supports, according to the backend's own evidence records. */
+export function dimensionsByEvidence(records: EvidenceRecord[]): Record<string, DevelopmentDimension[]> {
+  const map: Record<string, DevelopmentDimension[]> = {}
+  for (const record of records) {
+    for (const id of record.supportingEventIds) {
+      if (!map[id]) map[id] = []
+      if (!map[id].includes(record.dimension)) map[id].push(record.dimension)
     }
   }
   return map

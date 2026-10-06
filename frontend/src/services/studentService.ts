@@ -1,28 +1,39 @@
 // Service boundary: UI talks to this module, never to mock data or the network directly.
-// To go live, replace the bodies with calls to the API client; signatures stay the same.
+//
+// REAL (backend API, identity from the session):  getCurrentStudent
+// MOCK (teacher scope, not integrated yet):        listStudents, getStudent, listAttentionNotes
 import { deriveAttentionNotes } from '../data/mock/mockBackend'
 import { copy, db } from '../data/mock/store'
 import type { AttentionNote, Student } from '../types/domain'
+import { apiClient } from './apiClient'
+import { mapStudent } from './contracts/mappers'
+
+// The signed-in student does not change during a page session, so it is fetched once. A failure is not cached.
+let currentStudent: Promise<Student> | undefined
 
 export const studentService = {
-  /** The signed-in student. The real implementation will resolve this from the session. */
-  async getCurrentStudent(): Promise<Student> {
-    return copy(db.students.find((s) => s.id === db.studentId) ?? db.students[0])
+  /** GET /student/me. The backend identifies the student from the session; the client never supplies an id. */
+  getCurrentStudent(): Promise<Student> {
+    if (!currentStudent) {
+      currentStudent = apiClient.get('/student/me', { parse: mapStudent }).catch((error: unknown) => {
+        currentStudent = undefined
+        throw error
+      })
+    }
+    return currentStudent
   },
 
-  /** Teacher scope: every student the teacher works with. */
+  /** MOCK. Teacher scope: every student the teacher works with. */
   async listStudents(): Promise<Student[]> {
     return copy(db.students)
   },
 
+  /** MOCK. */
   async getStudent(studentId: string): Promise<Student | undefined> {
     return copy(db.students.find((s) => s.id === studentId))
   },
 
-  /**
-   * Teacher scope: prompts to look closer at a student (little evidence, repeated difficulty, inactive work,
-   * no teacher note yet). Derived by the backend; they are conversation starters, not judgements.
-   */
+  /** MOCK. Teacher scope: prompts to look closer at a student. */
   async listAttentionNotes(): Promise<AttentionNote[]> {
     return deriveAttentionNotes()
   },

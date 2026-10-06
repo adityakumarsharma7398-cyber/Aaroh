@@ -1,24 +1,20 @@
-// Service boundary for the AI mentor.
+// Service boundary for the mentor. REAL (current student).
 //
-// Contract for the future backend/AI endpoint:
-//  - the SERVER decides which hint level is granted next, from the student's own hint history for the task.
-//    The client sends only the task; it never sends, and is never trusted with, a level.
-//  - the model only writes the content for the level the server grants.
-//  - the response states the level that was granted, so the UI can show it.
-// Currently backed by canned, illustrative content in the mock backend. No AI is called.
-import { requestHint } from '../data/mock/mockBackend'
-import { copy, db } from '../data/mock/store'
-import type { HintLevel, MentorHint, MentorSession } from '../types/domain'
+// SECURITY: the SERVER decides which hint level is granted next, from the student's own hint history.
+// The client sends ONLY the task id. It never sends, and is never trusted with, a level (no `level`, `hintLevel`
+// or `requestedLevel`): the backend rejects those with 400 UNAUTHORIZED_HINT_LEVEL.
+import type { MentorHint, MentorSession } from '../types/domain'
+import { apiClient } from './apiClient'
+import { mapMentorHint, mapMentorSession } from './contracts/mappers'
 
 export const mentorService = {
+  /** GET /tasks/:taskId/mentor: the hints already granted for this task and the current level. */
   async getSession(taskId: string): Promise<MentorSession> {
-    const hints = db.hints.filter((h) => h.taskId === taskId).sort((a, b) => a.level - b.level)
-    const currentLevel = hints.reduce<HintLevel>((max, h) => (h.level > max ? h.level : max), 0)
-    return copy({ taskId, currentLevel, hints })
+    return apiClient.get(`/tasks/${encodeURIComponent(taskId)}/mentor`, { parse: mapMentorSession })
   },
 
-  /** Asks for the next level of guidance. The server picks the level and returns the hint it granted. */
+  /** POST /hint { taskId }. Returns the hint the server granted, including the level it chose. */
   async requestHint(taskId: string): Promise<MentorHint> {
-    return requestHint(taskId)
+    return apiClient.post('/hint', { body: { taskId }, parse: mapMentorHint })
   },
 }

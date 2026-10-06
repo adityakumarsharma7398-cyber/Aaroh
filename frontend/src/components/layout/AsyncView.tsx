@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import Card from '../ui/Card'
+import ErrorNotice from './ErrorNotice'
 import type { AsyncState } from '../../hooks/useAsyncData'
 
 type Props<T> = {
@@ -11,8 +11,6 @@ type Props<T> = {
 /** Standard loading / error handling so pages only describe the ready state. */
 export default function AsyncView<T>({ state, loadingLabel = 'Loading…', children }: Props<T>) {
   if (state.status === 'loading') return <p role="status" className="note">{loadingLabel}</p>
-  if (state.status === 'error') {
-    return <Card tone="softOrange" role="alert">Something went wrong while loading this page. Please try again.</Card>
-  }
+  if (state.status === 'error') return <ErrorNotice error={state.error} />
   return <>{children(state.data)}</>
 }

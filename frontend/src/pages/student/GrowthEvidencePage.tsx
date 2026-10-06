@@ -4,7 +4,7 @@ import EvidenceFlowExplainer from '../../components/evidence/EvidenceFlowExplain
 import EvidenceTimeline from '../../components/evidence/EvidenceTimeline'
 import GrowthTabs from '../../components/growth/GrowthTabs'
 import Card from '../../components/ui/Card'
-import { dimensionsByEvent, sortEvents } from '../../lib/evidence'
+import { dimensionsByEvidence, sortEvents } from '../../lib/evidence'
 import { useEvidenceData } from './studentData'
 
 export default function GrowthEvidencePage() {
@@ -20,13 +20,13 @@ export default function GrowthEvidencePage() {
       <EvidenceFlowExplainer />
 
       <AsyncView state={state} loadingLabel="Loading your evidence…">
-        {({ events, taskTitles, signals }) => (
+        {({ events, taskTitles, evidence }) => (
           <Card big>
             <h2 className="section-title">Recorded actions, newest first</h2>
             <EvidenceTimeline
               events={sortEvents(events, 'newest')}
               taskTitles={taskTitles}
-              dimensionsByEvent={dimensionsByEvent(signals)}
+              dimensionsByEvent={dimensionsByEvidence(evidence)}
               emptyText="No actions recorded yet. Evidence appears as you work on tasks and missions."
             />
           </Card>

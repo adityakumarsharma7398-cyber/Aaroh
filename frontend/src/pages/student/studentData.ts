@@ -1,65 +1,65 @@
 // Data hooks for the student pages. Each one is a thin composition of service calls.
-// Pages never import services or mock data directly for reads; they use these hooks.
-// A hook resolves to `undefined` when the requested entity does not exist.
+// Pages never import services directly for reads; they use these hooks.
+// A hook resolves to `undefined` when the requested entity does not exist (the backend answered 404).
+// Failures (401, 403, network, server) are NOT swallowed: they reach the page as an error state.
 import { useAsyncData } from '../../hooks/useAsyncData'
+import { titlesById } from '../../lib/tasks'
 import { evidenceService } from '../../services/evidenceService'
 import { growthService } from '../../services/growthService'
 import { mentorService } from '../../services/mentorService'
 import { missionService } from '../../services/missionService'
 import { reflectionService } from '../../services/reflectionService'
-import { studentService } from '../../services/studentService'
 import { taskService } from '../../services/taskService'
-import { titlesById } from '../../lib/tasks'
 import { isDevelopmentDimension } from '../../types/domain'
-
-async function currentStudentId(): Promise<string> {
-  return (await studentService.getCurrentStudent()).id
-}
 
 // ---- Tasks ---------------------------------------------------------------
 
 export function useTaskWorkspaceData(taskId: string) {
   return useAsyncData(async () => {
-    const task = await taskService.getTask(taskId)
-    if (!task) return undefined
-    const [attempts, mission] = await Promise.all([
+    // Started together so the task detail (which carries the attempts) is requested once, not twice.
+    const [task, attempts, mission] = await Promise.all([
+      taskService.getTask(taskId),
       taskService.listAttempts(taskId),
       missionService.getMissionForTask(taskId),
     ])
+    if (!task) return undefined
     return { task, attempts, mission }
   }, taskId)
 }
 
 export function useMentorData(taskId: string) {
   return useAsyncData(async () => {
-    const task = await taskService.getTask(taskId)
+    const [task, session, attempts] = await Promise.all([
+      taskService.getTask(taskId),
+      mentorService.getSession(taskId),
+      taskService.listAttempts(taskId),
+    ])
     if (!task) return undefined
-    const [session, attempts] = await Promise.all([mentorService.getSession(taskId), taskService.listAttempts(taskId)])
     return { task, session, attempts }
   }, taskId)
 }
 
 export function useCompletionData(taskId: string) {
   return useAsyncData(async () => {
-    const task = await taskService.getTask(taskId)
-    if (!task) return undefined
-    const [events, attempts] = await Promise.all([
-      evidenceService.listEventsForTask(taskId),
+    const [task, events, attempts] = await Promise.all([
+      taskService.getTask(taskId),
+      evidenceService.listMyEventsForTask(taskId),
       taskService.listAttempts(taskId),
     ])
+    if (!task) return undefined
     return { task, events, attempts }
   }, taskId)
 }
 
 export function useReflectionData(taskId: string) {
   return useAsyncData(async () => {
-    const task = await taskService.getTask(taskId)
-    if (!task) return undefined
-    const [prompts, reflection, mission] = await Promise.all([
-      reflectionService.getPrompts(taskId),
+    const [task, prompts, reflection, mission] = await Promise.all([
+      taskService.getTask(taskId),
+      reflectionService.getPrompts(),
       reflectionService.getReflection(taskId),
       missionService.getMissionForTask(taskId),
     ])
+    if (!task) return undefined
     return { task, prompts, reflection, mission }
   }, taskId)
 }
@@ -68,8 +68,7 @@ export function useReflectionData(taskId: string) {
 
 export function useMissionsData() {
   return useAsyncData(async () => {
-    const studentId = await currentStudentId()
-    const [missions, tasks] = await Promise.all([missionService.listMissions(studentId), taskService.listTasks(studentId)])
+    const [missions, tasks] = await Promise.all([missionService.listMissions(), taskService.listMyTasks()])
     return { missions, taskTitles: titlesById(tasks) }
   })
 }
@@ -81,7 +80,7 @@ export function useMissionData(missionId: string) {
     const [task, attempts, events] = await Promise.all([
       taskService.getTask(mission.taskId),
       missionService.listAttempts(missionId),
-      evidenceService.listEventsForMission(missionId),
+      evidenceService.listMyEventsForMission(missionId),
     ])
     return { mission, task, attempts, events }
   }, missionId)
@@ -91,36 +90,31 @@ export function useMissionData(missionId: string) {
 
 export function useGrowthData() {
   return useAsyncData(async () => {
-    const studentId = await currentStudentId()
-    const [signals, insight] = await Promise.all([
-      growthService.listSignals(studentId),
-      growthService.getLatestInsight(studentId),
-    ])
+    const [signals, insight] = await Promise.all([growthService.listMySignals(), growthService.getMyInsight()])
     return { signals, insight }
   })
 }
 
 export function useEvidenceData() {
   return useAsyncData(async () => {
-    const studentId = await currentStudentId()
-    const [events, tasks, signals] = await Promise.all([
-      evidenceService.listEvents(studentId),
-      taskService.listTasks(studentId),
-      growthService.listSignals(studentId),
+    const [events, tasks, signals, evidence] = await Promise.all([
+      evidenceService.listMyEvents(),
+      taskService.listMyTasks(),
+      growthService.listMySignals(),
+      evidenceService.listMyEvidenceRecords(),
     ])
-    return { events, taskTitles: titlesById(tasks), signals }
+    return { events, taskTitles: titlesById(tasks), signals, evidence }
   })
 }
 
 export function useDimensionData(dimension: string) {
   return useAsyncData(async () => {
     if (!isDevelopmentDimension(dimension)) return undefined
-    const studentId = await currentStudentId()
-    const signal = await growthService.getSignal(studentId, dimension)
+    const signal = await growthService.getMySignal(dimension)
     const [events, tasks, missions] = await Promise.all([
-      evidenceService.listEventsByIds(signal?.evidenceEventIds ?? []),
-      taskService.listTasks(studentId),
-      missionService.listMissions(studentId),
+      evidenceService.listMyEventsByIds(signal?.evidenceEventIds ?? []),
+      taskService.listMyTasks(),
+      missionService.listMissions(),
     ])
     return {
       dimension,
