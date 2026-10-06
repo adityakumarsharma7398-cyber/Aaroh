@@ -1,0 +1,23 @@
+{
+  "name": "education-growth",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev:server": "npm --workspace=@education-growth/server run dev",
+    "dev:client": "npm --workspace=@education-growth/client run dev",
+    "build": "npm --workspace=@education-growth/shared run build && npm --workspace=@education-growth/server run build && npm --workspace=@education-growth/client run build",
+    "typecheck": "npm --workspace=@education-growth/shared run typecheck && npm --workspace=@education-growth/server run typecheck && npm --workspace=@education-growth/client run typecheck",
+    "db:generate": "npm --workspace=@education-growth/server run db:generate",
+    "db:migrate": "npm --workspace=@education-growth/server run db:migrate",
+    "seed": "npm --workspace=@education-growth/server run seed",
+    "verify:events": "npm --workspace=@education-growth/server run verify:events",
+    "verify:evidence": "npm --workspace=@education-growth/server run verify:evidence",
+    "verify:signals": "npm --workspace=@education-growth/server run verify:signals",
+    "verify:seed": "npm --workspace=@education-growth/server run verify:seed"
+  }
+}
