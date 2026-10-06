@@ -1,6 +1,14 @@
 import { getMentorResponse } from "@/lib/ai/mentor";
 import { mentorRequestSchema } from "@/lib/ai/schemas";
 
+/**
+ * TEMPORARY / TESTING ROUTE: trusts the client-supplied `hintLevel`.
+ * Final production flow must authenticate the student and determine the
+ * allowed hint level server-side (via requestHint() in lib/ai/integration.ts)
+ * before calling mentor generation. This route remains temporarily compatible
+ * for Phase 1 testing until the auth/data layer exists. Do not expose it to
+ * students as-is.
+ */
 const MAX_BODY_CHARS = 20_000;
 
 export async function POST(request: Request) {

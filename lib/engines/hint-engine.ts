@@ -89,6 +89,22 @@ export function getAllowedHintLevel(requested: unknown): HintLevel | null {
   return isHintLevel(requested) ? requested : null;
 }
 
+/**
+ * Application rule for which level a help request is granted. Pure: callers
+ * pass the levels already granted for this task (from the data layer).
+ * - Nothing granted yet and the student has not described their attempt: 0.
+ * - Otherwise one step above the highest level granted so far, capped at 5.
+ * The AI never influences this.
+ */
+export function nextHintLevel(
+  grantedLevels: readonly HintLevel[],
+  studentDescribedAttempt: boolean,
+): HintLevel {
+  if (grantedLevels.length === 0) return studentDescribedAttempt ? 1 : 0;
+  const highest = Math.max(...grantedLevels);
+  return Math.min(5, highest + 1) as HintLevel;
+}
+
 export function getResponseMode(level: HintLevel): ResponseMode {
   return HINT_LEVEL_SPECS[level].mode;
 }

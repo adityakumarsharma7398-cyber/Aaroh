@@ -1,5 +1,10 @@
 import { LEVEL_0_PROMPT } from "../engines/hint-engine.ts";
-import type { MentorRequest, MentorResponse } from "./schemas.ts";
+import type {
+  Dimension,
+  MentorRequest,
+  MentorResponse,
+  Mission,
+} from "./schemas.ts";
 
 const MIN_CONTEXT_FOR_DIRECT_ANSWER = 20;
 
@@ -61,3 +66,74 @@ export function getFallbackResponse(
           };
   }
 }
+
+// ─── Phase 1B: Growth Missions ───────────────────────────────────────────────
+
+/** Generic, deterministic missions (any subject). They never score the student. */
+export const MISSION_FALLBACKS: Record<Dimension, Mission> = {
+  self_reliance: {
+    title: "First Try",
+    challenge: "Build your first approach before asking for a solution.",
+    focus: "Start with your own reasoning, then use help to move forward.",
+    instructions: [
+      "Try the task on your own first.",
+      "Write down or explain what you think is happening.",
+      "If you get stuck, identify the exact point where you are stuck before asking for help.",
+      "After receiving guidance, try the task again yourself.",
+    ],
+    reflection:
+      "What did you figure out on your own, and what changed after you received help?",
+  },
+  perseverance: {
+    title: "Second Wind",
+    challenge:
+      "Keep working on the task after your first approach runs into trouble.",
+    focus: "Stay with the problem after your first approach does not work.",
+    instructions: [
+      "Make an attempt at the task.",
+      "If it does not work, write down what went wrong.",
+      "Change one thing and try again.",
+      "Keep going until you complete the task or make clear progress, and note how far you got.",
+    ],
+    reflection:
+      "What did you change after the first try, and what did it teach you?",
+  },
+  problem_solving: {
+    title: "Plan B",
+    challenge:
+      "Plan an approach, test it, and switch strategy if it does not work.",
+    focus: "Try a different strategy when your first one does not work.",
+    instructions: [
+      "In a sentence or two, say what the problem is asking.",
+      "Choose an approach and try it.",
+      "If it fails, say why it failed.",
+      "Pick a different approach and explain how it differs from the first.",
+    ],
+    reflection:
+      "Why did you choose your approach, and what made the second one different?",
+  },
+  initiative: {
+    title: "One Step Further",
+    challenge:
+      "Complete the task, then make one meaningful improvement of your own choosing.",
+    focus: "Make a thoughtful choice that improves your work on this task.",
+    instructions: [
+      "Complete the core task first.",
+      "Choose one way to improve or extend your work, such as a clearer method or an extra check.",
+      "Try your idea.",
+      "Write one sentence on why you chose it.",
+    ],
+    reflection: "What did you decide to add, and why did you choose it?",
+  },
+  sustained_engagement: {
+    title: "Finish the Block",
+    challenge: "Work through one clear section of the task from start to finish.",
+    focus: "Stay with one defined part of the task until it is done.",
+    instructions: [
+      "Pick one clear section of the task to complete.",
+      "Work on it until that section is finished.",
+      "Write down what you completed.",
+    ],
+    reflection: "What helped you keep going with this section?",
+  },
+};

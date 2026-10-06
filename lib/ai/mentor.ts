@@ -45,6 +45,15 @@ export function composeResponse(
 }
 
 /**
+ * LOW-LEVEL PRIMITIVE: generates a response at whatever `req.hintLevel` it is
+ * given and does not decide whether that level is allowed. Application code
+ * should call `requestHint()` in integration.ts, which chooses the level.
+ *
+ * Final production flow must authenticate the student and determine the
+ * allowed hint level server-side before calling mentor generation. The current
+ * POST /api/ai/mentor route remains temporarily compatible for Phase 1 testing
+ * until the auth/data layer exists.
+ *
  * Produces a mentor response for an already-validated request.
  * Never throws: any failure yields the deterministic fallback.
  * The hint level and mentor reference always come from the application.

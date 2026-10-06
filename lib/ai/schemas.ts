@@ -9,6 +9,8 @@ export const DIMENSIONS = [
   "sustained_engagement",
 ] as const;
 
+export type Dimension = (typeof DIMENSIONS)[number];
+
 const hintLevelSchema = z
   .number()
   .int()
@@ -70,3 +72,32 @@ export const mentorResponseSchema = z.object({
   fallbackReason: z.string().optional(),
 });
 export type MentorResponse = z.infer<typeof mentorResponseSchema>;
+
+// ─── Phase 1B: Growth Missions ───────────────────────────────────────────────
+
+export const missionRequestSchema = z.object({
+  academicTask: z.string().trim().min(1).max(2000),
+  subject: z.string().trim().min(1).max(100),
+  ageOrGrade: z.string().trim().min(1).max(50),
+  developmentDimension: z.enum(DIMENSIONS),
+});
+export type MissionRequest = z.infer<typeof missionRequestSchema>;
+
+/**
+ * A Growth Mission creates a condition for observable behavior. It never holds
+ * scores, labels or evidence; unknown keys (e.g. a "score") are stripped.
+ */
+export const missionSchema = z.object({
+  title: text(80),
+  challenge: text(400),
+  focus: text(300),
+  instructions: z.array(text(300)).min(2).max(5),
+  reflection: text(300).nullable(),
+});
+export type Mission = z.infer<typeof missionSchema>;
+
+export type MissionResponse = {
+  success: true;
+  mission: Mission;
+  source: "gemini" | "fallback";
+};
