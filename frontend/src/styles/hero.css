@@ -1,0 +1,86 @@
+/* AAROH hero: the Growth Compass.
+   Uses the design tokens from ../index.css. Imported after it in main.tsx.
+   The compass is sized by its own width (container queries), so it keeps its shape at any viewport:
+   wide enough, the five dimensions are labelled on the bezel; narrower, the nodes shrink to dots
+   and the labels move into a legend underneath. Nothing here animates once it has appeared. */
+
+.hero__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); }
+.hero__grid > * { min-width: 0; }
+@media (max-width: 900px) { .hero__grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* ===== Wrapper and floating cards ===== */
+.aaroh { position: relative; width: 100%; max-width: 580px; margin-inline: auto; }
+.aaroh__card { display: grid; gap: 4px; padding: 12px 14px; }
+.aaroh__card small { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.aaroh__card strong { font: 700 1rem/1.25 var(--font-head); }
+
+/* Narrow screens: compass first, then the three cards side by side or wrapped. */
+.aaroh { display: grid; gap: 16px; }
+@media (min-width: 560px) and (max-width: 900px) { .aaroh { grid-template-columns: repeat(3, minmax(0, 1fr)); } .aaroh .compass-card { grid-column: 1 / -1; } }
+
+/* Wide screens: the cards float over the edges of the compass frame. */
+@media (min-width: 901px) {
+  .aaroh { display: block; padding-block: 64px; }
+  .aaroh__card { position: absolute; z-index: 2; width: min(44%, 230px); }
+  .aaroh__card--1 { top: 0; left: 0; transform: rotate(-2deg); }
+  .aaroh__card--2 { top: 6px; right: 0; transform: rotate(2deg); }
+  .aaroh__card--3 { bottom: 0; left: 7%; transform: rotate(-1.5deg); }
+}
+
+/* ===== Compass frame ===== */
+.compass-card { padding: 0; container-type: inline-size; overflow: hidden; }
+.compass { position: relative; aspect-ratio: 1; width: 100%; }
+.compass__svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.compass__ring { fill: none; stroke: var(--black); stroke-width: 0.45; }
+.compass__ring--inner { stroke-dasharray: 1.2 1.8; stroke-width: 0.35; opacity: 0.55; }
+.compass__tick { stroke: var(--black); stroke-width: 0.35; stroke-linecap: round; opacity: 0.7; }
+.compass__tick--major { stroke-width: 0.8; opacity: 1; }
+.compass__sparkle { fill: var(--orange); stroke: var(--black); stroke-width: 0.2; }
+.compass__path { fill: none; stroke: var(--black); stroke-width: 0.8; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 0; animation: aaroh-draw 0.9s ease-out both; animation-delay: inherit; }
+.compass__link { animation: none; }
+.compass__end { stroke: var(--black); stroke-width: 0.45; }
+
+/* ===== Core ===== */
+.compass__core {
+  position: absolute; inset: 0; margin: auto; width: 34%; height: 34%; z-index: 1;
+  display: grid; place-content: center; justify-items: center; gap: 2px; text-align: center;
+  background: var(--yellow); border: 2px solid var(--black); border-radius: 50%; box-shadow: 4px 4px 0 var(--black);
+  animation: aaroh-pop 0.6s ease-out both;
+}
+.compass__mark { width: 30%; height: auto; margin-bottom: 2px; }
+.compass__name { font: 700 clamp(1rem, 6.2cqw, 2rem)/1 var(--font-head); letter-spacing: 0.06em; }
+.compass__sub { max-width: 80%; font: 500 clamp(0.72rem, 2.3cqw, 0.9rem)/1.15 var(--font-body); }
+
+/* ===== Dimension nodes ===== */
+.compass__node {
+  position: absolute; z-index: 1; display: inline-flex; align-items: center; gap: 8px; max-width: 46%;
+  padding: 5px 12px 5px 8px; transform: translate(-50%, -50%); white-space: nowrap;
+  background: var(--white); border: 2px solid var(--black); border-radius: 12px; box-shadow: 2px 2px 0 var(--black);
+  animation: aaroh-fade 0.6s ease-out both;
+}
+.compass__label { font: 700 clamp(0.78rem, 2.5cqw, 0.95rem)/1.2 var(--font-body); }
+.compass__dot { flex: none; display: inline-block; width: 14px; height: 14px; background: var(--dot); border: 2px solid var(--black); border-radius: 50%; }
+.dot--orange { --dot: var(--orange); }
+.dot--blue { --dot: var(--blue); }
+.dot--softBlue { --dot: var(--soft-blue); }
+.dot--yellow { --dot: var(--yellow); }
+.dot--pink { --dot: var(--soft-pink); }
+.compass__end { fill: var(--dot); }
+
+/* ===== Legend (compact mode only) ===== */
+.compass__legend { display: none; }
+@container (max-width: 479px) {
+  .compass__node { padding: 0; background: none; border: 0; box-shadow: none; }
+  .compass__label, .compass__sub { display: none; }
+  .compass__dot { width: clamp(18px, 6.5cqw, 26px); height: clamp(18px, 6.5cqw, 26px); }
+  .compass__legend {
+    display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 14px 16px 16px; border-top: 2px solid var(--black); background: var(--soft-blue);
+  }
+  .compass__legend li { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.92rem; }
+  .compass__legend .compass__dot { width: 16px; height: 16px; }
+}
+
+/* ===== Motion: each piece appears once, then rests. Reduced motion shows the final state. ===== */
+@keyframes aaroh-draw { from { stroke-dashoffset: 1; } }
+@keyframes aaroh-fade { from { opacity: 0; } }
+@keyframes aaroh-pop { from { opacity: 0; transform: scale(0.9); } }
