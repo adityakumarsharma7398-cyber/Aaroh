@@ -1,76 +1,117 @@
 /**
- * AI integration layer (Phase 2 + 3).
+ * AI <-> backend integration layer (Member 1).
  *
- * Member 1 owns this file: it connects mission / hint / reflection generation
- * to the application flow. It does NOT store, score or interpret anything.
- * Events, evidence and signals belong to Member 3's data layer, which plugs in
- * by implementing `AIIntegrationAdapter`. The event shape below is a PROVISIONAL
- * view of what the AI flow emits; Member 3's contract wins if it differs.
+ * Connects mission / hint / reflection generation to the backend WITHOUT
+ * storing, scoring or interpreting anything. Events, evidence and signals are
+ * owned by Member 3's backend (server/, shared/): the adapter below maps 1:1
+ * onto functions that already exist there. Event types and shapes come from
+ * shared/ (type-only imports, no duplication).
+ *
+ * Identity: `studentId` must come from the backend's authenticated session,
+ * never from a request body. Hint levels are chosen here from the stored
+ * hint history, never from the client.
  */
-import { nextHintLevel, type HintLevel } from "../engines/hint-engine.ts";
+import type {
+  AcademicTask,
+  DevelopmentDimension,
+  EventType,
+  Mission as BackendMission,
+  ObservableEvent,
+  RecordEventInput,
+} from "../../../shared/src/index.ts";
+import { isHintLevel, nextHintLevel, type HintLevel } from "../engines/hint-engine.ts";
 import { generateJson } from "./gemini.ts";
 import { getMentorResponse } from "./mentor.ts";
 import { generateMission } from "./mission.ts";
 import { generateReflection } from "./reflection.ts";
-import type { Dimension, MentorReference, MentorResponse } from "./schemas.ts";
-import type { MissionRequest, MissionResponse } from "./schemas.ts";
+import type {
+  Mission,
+  MissionRequest,
+  MissionResponse,
+  MentorReference,
+  MentorResponse,
+} from "./schemas.ts";
 import type { ReflectionRequest, ReflectionResponse } from "./reflection.ts";
 
-// ─── Event contract (provisional; Member 3 owns the real one) ────────────────
+// ─── Events (canonical definitions live in shared/) ──────────────────────────
 
-export type AppEventType =
-  | "attempt"
-  | "hint_requested"
-  | "hint_level_granted"
-  | "retry"
-  | "reflection"
-  | "completed";
+/** The subset of backend event types the AI flow emits. */
+export type AIEventType = Extract<
+  EventType,
+  "attempt" | "hint_requested" | "hint_level_granted" | "retry" | "reflection" | "completed"
+>;
 
-export type AppEvent = {
-  studentId: string;
-  taskId: string;
-  type: AppEventType;
-  /** AI flow only emits "app". Teacher observations are Member 3's. */
-  source: "app";
-  metadata: Record<string, string | number | boolean | null>;
-  createdAt: string; // ISO timestamp
+/** What the AI flow sends to the backend: shared/ RecordEventInput with createdAt always set. */
+export type AppEvent = RecordEventInput & { createdAt: string };
+
+/**
+ * Source convention used by the backend seed data: things the student does
+ * are "student", things the application decides or records are "app".
+ */
+const SOURCE_BY_TYPE: Record<AIEventType, "app" | "student"> = {
+  attempt: "app",
+  hint_requested: "student",
+  hint_level_granted: "app",
+  retry: "app",
+  reflection: "student",
+  completed: "app",
 };
 
 /**
- * What Member 3's data layer must provide. The AI flow only records
- * application events and reads hint history; it never reads or computes
- * evidence or signals.
+ * What the backend must provide. Maps onto existing server/src/events/logger.ts:
+ *   recordEvent          -> recordEvent(input)
+ *   getStudentTaskEvents -> getStudentTaskEvents(studentId, taskId)
+ * `getTask` does NOT exist yet (Member 3 requirement): it must read the tasks table.
+ * The AI flow never reads or computes evidence or signals.
  */
 export interface AIIntegrationAdapter {
-  recordEvent(event: AppEvent): Promise<void>;
-  /** Hint levels already granted to this student for this task. */
-  getGrantedHintLevels(studentId: string, taskId: string): Promise<HintLevel[]>;
+  recordEvent(input: RecordEventInput): Promise<unknown>;
+  getStudentTaskEvents(
+    studentId: string,
+    taskId: string,
+  ): Promise<Pick<ObservableEvent, "type" | "metadata">[]>;
+  getTask(
+    taskId: string,
+  ): Promise<Pick<AcademicTask, "id" | "title" | "subject" | "description"> | null>;
 }
 
-/** Placeholder until the data layer exists: records nothing, has no history. */
+/** Placeholder: records nothing, has no history and no tasks. */
 export function createNoopAdapter(): AIIntegrationAdapter {
   return {
     async recordEvent() {},
-    async getGrantedHintLevels() {
+    async getStudentTaskEvents() {
       return [];
+    },
+    async getTask() {
+      return null;
     },
   };
 }
 
-/** Event recording is best-effort: a data-layer failure must not break the student's help. */
+/** Levels already granted, read from the backend's own hint_level_granted events. */
+export function grantedLevelsFromEvents(
+  events: Pick<ObservableEvent, "type" | "metadata">[],
+): HintLevel[] {
+  return events
+    .filter((e) => e.type === "hint_level_granted")
+    .map((e) => e.metadata?.level)
+    .filter(isHintLevel);
+}
+
+/** Event recording is best-effort: a backend failure must not break the student's help. */
 async function record(
   adapter: AIIntegrationAdapter,
   studentId: string,
   taskId: string,
-  type: AppEventType,
-  metadata: AppEvent["metadata"] = {},
+  type: AIEventType,
+  metadata: Record<string, unknown> = {},
 ): Promise<void> {
   try {
     await adapter.recordEvent({
       studentId,
       taskId,
       type,
-      source: "app",
+      source: SOURCE_BY_TYPE[type],
       metadata,
       createdAt: new Date().toISOString(),
     });
@@ -88,7 +129,34 @@ export function requestMission(
   return generateMission(req, generate);
 }
 
-// ─── Hint (application controls the level) ───────────────────────────────────
+/**
+ * Maps an AI mission onto the backend's Mission row (without id, status,
+ * createdAt, which the backend assigns). Lossy: the backend Mission has one
+ * `instruction` string, so title, challenge, focus, steps and the reflection
+ * question are flattened into it. Persistence is the backend's job.
+ */
+export function toBackendMissionDraft(
+  mission: Mission,
+  ctx: { taskId: string; studentId: string; dimension: DevelopmentDimension },
+): Omit<BackendMission, "id" | "status" | "createdAt"> {
+  const steps = mission.instructions.map((s, i) => `${i + 1}. ${s}`).join("\n");
+  const instruction = [
+    `${mission.title}: ${mission.challenge}`,
+    `Focus: ${mission.focus}`,
+    steps,
+    mission.reflection ? `Reflect: ${mission.reflection}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return {
+    taskId: ctx.taskId,
+    studentId: ctx.studentId,
+    instruction,
+    dimensions: [ctx.dimension],
+  };
+}
+
+// ─── Hint (the application controls the level) ───────────────────────────────
 
 export type HintFlowInput = {
   studentId: string;
@@ -96,13 +164,14 @@ export type HintFlowInput = {
   task: string;
   /** What the student says they tried. Empty if nothing yet. */
   attempt: string;
-  dimension?: Dimension;
+  dimension?: DevelopmentDimension;
   mentorReference?: MentorReference;
 };
 
 /**
- * hint_requested -> application picks the level -> AI writes that level only
- * -> hint_level_granted. Returns what the student sees.
+ * hint_requested -> level chosen from the backend's hint history -> AI writes
+ * that level only -> hint_level_granted (metadata.level, the field the
+ * backend evidence rules read).
  */
 export async function requestHint(
   adapter: AIIntegrationAdapter,
@@ -114,7 +183,9 @@ export async function requestHint(
 
   let granted: HintLevel[] = [];
   try {
-    granted = await adapter.getGrantedHintLevels(studentId, taskId);
+    granted = grantedLevelsFromEvents(
+      await adapter.getStudentTaskEvents(studentId, taskId),
+    );
   } catch {
     console.error("[integration] failed to read hint history");
   }
@@ -138,6 +209,22 @@ export async function requestHint(
   return response;
 }
 
+/**
+ * Trusted client-facing path: the client sends only a taskId (see
+ * clientHintRequestSchema). The task text comes from the backend, the identity
+ * from the session, and the level from stored history.
+ */
+export async function requestHintForTask(
+  adapter: AIIntegrationAdapter,
+  input: Omit<HintFlowInput, "task">,
+  generate: typeof generateJson = generateJson,
+): Promise<{ ok: true; data: MentorResponse } | { ok: false; error: "task_not_found" }> {
+  const task = await adapter.getTask(input.taskId);
+  if (!task) return { ok: false, error: "task_not_found" };
+  const text = `${task.title} (${task.subject}): ${task.description}`.slice(0, 4000);
+  return { ok: true, data: await requestHint(adapter, { ...input, task: text }, generate) };
+}
+
 // ─── Reflection ──────────────────────────────────────────────────────────────
 
 /** Generates a reflection question. Records nothing: no student action has happened yet. */
@@ -148,30 +235,36 @@ export function requestReflection(
   return generateReflection(req, generate);
 }
 
-/** Call when the student actually submits a reflection. Stores only length, not the text. */
+/**
+ * Call when the student actually submits a reflection. The text is user data
+ * and goes to the backend as `metadata.note` (the backend's own convention).
+ * It is never interpreted by AI; the backend rules decide what it counts for.
+ */
 export function recordReflectionSubmitted(
   adapter: AIIntegrationAdapter,
   input: {
     studentId: string;
     taskId: string;
-    dimension: Dimension;
+    dimension: DevelopmentDimension;
     response: string;
   },
 ): Promise<void> {
+  const note = input.response.trim().slice(0, 2000);
   return record(adapter, input.studentId, input.taskId, "reflection", {
     dimension: input.dimension,
-    responseLength: input.response.trim().length,
+    note,
+    responseLength: note.length,
   });
 }
 
-/** Lets the app record the student actions the AI flow does not see (attempt, retry, completed). */
+/** Lets the app record student actions the AI flow does not see (attempt, retry, completed). */
 export function recordStudentAction(
   adapter: AIIntegrationAdapter,
   input: {
     studentId: string;
     taskId: string;
-    type: Extract<AppEventType, "attempt" | "retry" | "completed">;
-    metadata?: AppEvent["metadata"];
+    type: Extract<AIEventType, "attempt" | "retry" | "completed">;
+    metadata?: Record<string, unknown>;
   },
 ): Promise<void> {
   return record(adapter, input.studentId, input.taskId, input.type, input.metadata);

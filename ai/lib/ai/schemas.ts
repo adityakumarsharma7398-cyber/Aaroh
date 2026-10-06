@@ -96,6 +96,18 @@ export const missionSchema = z.object({
 });
 export type Mission = z.infer<typeof missionSchema>;
 
+/**
+ * Client-facing hint request. The client names a task and describes its
+ * attempt; strict mode REJECTS any `hintLevel`, `level` or `studentId` field,
+ * because the level comes from backend history and identity from the session.
+ */
+export const clientHintRequestSchema = z.strictObject({
+  taskId: z.string().trim().min(1).max(100),
+  attempt: z.string().trim().max(4000).default(""),
+  dimension: z.enum(DIMENSIONS).optional(),
+});
+export type ClientHintRequest = z.infer<typeof clientHintRequestSchema>;
+
 export type MissionResponse = {
   success: true;
   mission: Mission;

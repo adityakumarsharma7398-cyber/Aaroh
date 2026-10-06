@@ -55,20 +55,20 @@ Level rule (`nextHintLevel` in `lib/engines/hint-engine.ts`): 0 if no hint has b
 - `requestMission(req)`
 - `requestHint(adapter, input)`: records `hint_requested`, picks the level, generates it, records `hint_level_granted`. Preferred hint path.
 - `requestReflection(req)`: generates only; nothing is recorded.
-- `recordReflectionSubmitted(adapter, ...)`: call when the student submits a reflection (stores length only).
+- `recordReflectionSubmitted(adapter, ...)`: call when the student submits a reflection (stored through the backend as the event note).
 - `recordStudentAction(adapter, ...)`: for `attempt`, `retry`, `completed`.
 
 ## Events
 
 Expected app events: `attempt`, `hint_requested`, `hint_level_granted`, `retry`, `reflection`, `completed`.
-Shape (provisional): `{ studentId, taskId, type, source: "app", metadata, createdAt }`.
+Shape: shared `RecordEventInput` `{ studentId, taskId, type, source, metadata, createdAt }`; source is `student` for hint_requested and reflection, `app` otherwise.
 
-Member 3 owns persistence. To connect it, implement `AIIntegrationAdapter`:
+Member 3 owns persistence. The event shape now comes from `shared/` (see `BACKEND_CONTRACT.md` for the full mapping, requirements and blockers). To connect it, implement `AIIntegrationAdapter`:
 
 - `recordEvent(event)`
-- `getGrantedHintLevels(studentId, taskId)`
+- `getStudentTaskEvents(studentId, taskId)` and `getTask(taskId)`
 
-The event shape is provisional: if Member 3's contract differs, it wins and `integration.ts` should be adjusted to it.
+
 
 ## Ownership
 
