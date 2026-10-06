@@ -18,6 +18,7 @@
     "verify:events": "npm --workspace=@education-growth/server run verify:events",
     "verify:evidence": "npm --workspace=@education-growth/server run verify:evidence",
     "verify:signals": "npm --workspace=@education-growth/server run verify:signals",
-    "verify:seed": "npm --workspace=@education-growth/server run verify:seed"
+    "verify:seed": "npm --workspace=@education-growth/server run verify:seed",
+    "verify:api": "npm --workspace=@education-growth/server run verify:api"
   }
 }

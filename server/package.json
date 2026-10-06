@@ -14,7 +14,8 @@
     "verify:events": "tsx src/events/verify.ts",
     "verify:evidence": "tsx src/engine/verify.ts",
     "verify:signals": "tsx src/engine/verify_signals.ts",
-    "verify:seed": "tsx src/seeds/verify_seed.ts"
+    "verify:seed": "tsx src/seeds/verify_seed.ts",
+    "verify:api": "tsx src/routes/verify_api.ts"
   },
   "dependencies": {
     "@education-growth/shared": "*",

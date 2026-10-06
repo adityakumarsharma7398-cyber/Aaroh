@@ -1,7 +1,8 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
+import apiRouter from "./routes/index";
+import { errorHandler } from "./middleware/error";
 import { checkDatabaseConnection } from "./db/client";
-import type { Student } from "@education-growth/shared";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -9,29 +10,27 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Health check endpoint verifying database connectivity and shared type usage
-app.get("/api/health", async (_req: Request, res: Response) => {
-  const dbStatus = await checkDatabaseConnection();
+// Mount all API endpoints under /api
+app.use("/api", apiRouter);
 
-  // Demonstrate using a shared contract type on the server
-  const sampleStudent: Student = {
-    id: "sample-demo-student",
-    name: "Foundation Check Student",
-    email: "student@hackathon.local",
-    createdAt: new Date().toISOString(),
-  };
-
-  res.json({
-    status: "ok",
-    timestamp: new Date().toISOString(),
-    database: dbStatus,
-    sampleContractCheck: sampleStudent,
+// Handle 404 for unmatched API routes
+app.use("/api/*", (_req: Request, res: Response) => {
+  res.status(404).json({
+    error: {
+      code: "NOT_FOUND",
+      message: "The requested API endpoint does not exist.",
+    },
   });
 });
 
+// Centralized error handling middleware
+app.use(errorHandler);
+
 if (process.env.NODE_ENV !== "test") {
   checkDatabaseConnection().then((dbStatus) => {
-    console.log(`[Database] SQLite connected at ${dbStatus.path} (status: ${dbStatus.ok ? "OK" : "FAILED"})`);
+    console.log(
+      `[Database] SQLite connected at ${dbStatus.path} (status: ${dbStatus.ok ? "OK" : "FAILED"})`
+    );
   });
 
   app.listen(PORT, () => {
