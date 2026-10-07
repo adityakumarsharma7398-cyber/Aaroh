@@ -1,6 +1,7 @@
 import AsyncView from '../../components/layout/AsyncView'
 import PageHeader from '../../components/layout/PageHeader'
 import ActionEvidenceSignalFlow from '../../components/growth/ActionEvidenceSignalFlow'
+import CoreAarohLoopDiagram from '../../components/growth/CoreAarohLoopDiagram'
 import DimensionCard from '../../components/growth/DimensionCard'
 import GrowthInsightCard from '../../components/growth/GrowthInsightCard'
 import GrowthTabs from '../../components/growth/GrowthTabs'
@@ -25,6 +26,9 @@ export default function GrowthPage() {
           <div className="growth-page-content" style={{ display: 'grid', gap: '28px' }}>
             {/* Visual 5-Dimension Growth Compass */}
             <StudentGrowthCompass signals={signals} />
+
+            {/* Core 7-Stage AAROH Paradigm Loop */}
+            <CoreAarohLoopDiagram />
 
             {/* Action -> Evidence -> Signal Pipeline Visual */}
             <ActionEvidenceSignalFlow />

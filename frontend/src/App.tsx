@@ -27,8 +27,10 @@ import SignalsPage from './pages/teacher/SignalsPage'
 import EvidencePage from './pages/teacher/EvidencePage'
 
 import DemoEntryPage from './pages/public/DemoEntryPage'
+import LoginPage from './pages/public/LoginPage'
+import SignupPage from './pages/public/SignupPage'
 
-// Public routes live inside PublicLayout. /login, /signup and /demo route into DemoEntryPage.
+// Public routes live inside PublicLayout.
 export default function App() {
   return (
     <Routes>
@@ -36,8 +38,8 @@ export default function App() {
         <Route index element={<LandingPage />} />
         <Route path="/how-it-works" element={<LandingPage />} />
         <Route path="/about" element={<LandingPage />} />
-        <Route path="/login" element={<DemoEntryPage />} />
-        <Route path="/signup" element={<DemoEntryPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
         <Route path="/demo" element={<DemoEntryPage />} />
       </Route>
 

@@ -28,12 +28,12 @@ function MentorView({ task, session, attempts, reload }: MentorProps) {
   const [error, setError] = useState<string>()
   const nextLevel = nextHintLevel(session.currentLevel)
 
-  async function requestNext() {
+  async function requestNext(questionText?: string) {
     if (nextLevel === undefined) return
     setRequesting(true)
     setError(undefined)
     try {
-      await mentorService.requestHint(task.id)
+      await mentorService.requestHint(task.id, questionText)
       reload()
     } catch (err) {
       setError(actionMessage(err, 'We could not get guidance just now. Please try again.'))

@@ -13,8 +13,11 @@ export const mentorService = {
     return apiClient.get(`/tasks/${encodeURIComponent(taskId)}/mentor`, { parse: mapMentorSession })
   },
 
-  /** POST /hint { taskId }. Returns the hint the server granted, including the level it chose. */
-  async requestHint(taskId: string): Promise<MentorHint> {
-    return apiClient.post('/hint', { body: { taskId }, parse: mapMentorHint })
+  /** POST /hint { taskId, attempt? }. Returns the hint the server granted, including the level it chose. */
+  async requestHint(taskId: string, attempt?: string): Promise<MentorHint> {
+    return apiClient.post('/hint', {
+      body: attempt && attempt.trim().length > 0 ? { taskId, attempt: attempt.trim() } : { taskId },
+      parse: mapMentorHint,
+    })
   },
 }
