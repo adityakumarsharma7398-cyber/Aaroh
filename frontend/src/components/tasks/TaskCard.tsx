@@ -30,9 +30,11 @@ export default function TaskCard({ task, to, isCurrentFocus }: Props) {
 
       <h2 className="task-item__title">{task.title}</h2>
       <p>{task.description}</p>
-      <p className="task-item__effort">
-        <span>Estimated effort</span> {formatMinutes(task.estimatedMinutes)}
-      </p>
+      {task.estimatedMinutes !== undefined && (
+        <p className="task-item__effort">
+          <span>Estimated effort</span> {formatMinutes(task.estimatedMinutes)}
+        </p>
+      )}
 
       {task.opportunities.length > 0 && (
         <div className="task-item__dev">

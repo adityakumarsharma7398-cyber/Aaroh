@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import ErrorNotice from '../../components/layout/ErrorNotice'
 import PageHeader from '../../components/layout/PageHeader'
 import TaskCard from '../../components/tasks/TaskCard'
 import TaskFilters from '../../components/tasks/TaskFilters'
@@ -50,7 +51,7 @@ export default function TasksPage() {
     return (
       <>
         <PageHeader {...HEADER} />
-        <Card tone="softOrange" role="alert">Something went wrong while loading your tasks. Please try again.</Card>
+        <ErrorNotice error={state.error} />
       </>
     )
   }

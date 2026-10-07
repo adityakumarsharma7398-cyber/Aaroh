@@ -13,6 +13,7 @@ import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import { studentRoutes } from '../../config/routes'
+import { actionMessage } from '../../lib/errors'
 import { formatClock, formatMinutes } from '../../lib/format'
 import { taskService } from '../../services/taskService'
 import type { Mission, Task, TaskAttempt } from '../../types/domain'
@@ -44,8 +45,8 @@ function TaskWorkspace({ task, attempts, mission, reload }: WorkspaceProps) {
       const attempt = await taskService.saveAttempt(task.id, draft)
       setSavedAt(formatClock(attempt.createdAt))
       reload()
-    } catch {
-      setError('We could not save your attempt. Please try again.')
+    } catch (err) {
+      setError(actionMessage(err, 'We could not save your attempt. Please try again.'))
     } finally {
       setSaving(false)
     }
@@ -57,8 +58,8 @@ function TaskWorkspace({ task, attempts, mission, reload }: WorkspaceProps) {
     try {
       await taskService.completeTask(task.id)
       navigate(studentRoutes.taskComplete(task.id))
-    } catch {
-      setError('We could not mark this task complete. Please try again.')
+    } catch (err) {
+      setError(actionMessage(err, 'We could not mark this task complete. Please try again.'))
       setCompleting(false)
     }
   }
@@ -71,7 +72,9 @@ function TaskWorkspace({ task, attempts, mission, reload }: WorkspaceProps) {
       <div className="task-meta">
         <Badge tone="blue">{task.subject}</Badge>
         <TaskStatusBadge status={task.status} />
-        <span><strong>Estimated effort:</strong> {formatMinutes(task.estimatedMinutes)}</span>
+        {task.estimatedMinutes !== undefined && (
+          <span><strong>Estimated effort:</strong> {formatMinutes(task.estimatedMinutes)}</span>
+        )}
       </div>
 
       <div className="workspace">

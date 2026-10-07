@@ -10,6 +10,7 @@ import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import { studentRoutes } from '../../config/routes'
+import { actionMessage } from '../../lib/errors'
 import { reflectionService } from '../../services/reflectionService'
 import type { ReflectionAnswer } from '../../types/domain'
 import { useReflectionData } from './studentData'
@@ -26,8 +27,8 @@ export default function ReflectionPage() {
     try {
       await reflectionService.submitReflection(taskId, answers)
       state.reload()
-    } catch {
-      setError('We could not save your reflection. Please try again.')
+    } catch (err) {
+      setError(actionMessage(err, 'We could not save your reflection. Please try again.'))
     } finally {
       setSubmitting(false)
     }

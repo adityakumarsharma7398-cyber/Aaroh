@@ -1,3 +1,4 @@
+import ErrorNotice from '../../components/layout/ErrorNotice'
 import PageHeader from '../../components/layout/PageHeader'
 import EvidenceList from '../../components/evidence/EvidenceList'
 import DevelopmentOpportunities from '../../components/growth/DevelopmentOpportunities'
@@ -9,6 +10,7 @@ import Badge from '../../components/ui/Badge'
 import Card from '../../components/ui/Card'
 import { studentRoutes } from '../../config/routes'
 import { firstName, formatLongDate, getGreeting } from '../../lib/format'
+import { DEVELOPMENT_DIMENSIONS } from '../../types/domain'
 import { useTodayData } from './useTodayData'
 
 export default function TodayPage() {
@@ -26,7 +28,7 @@ export default function TodayPage() {
     return (
       <>
         <PageHeader title="Today" />
-        <Card tone="softOrange" role="alert">Something went wrong while loading your day. Please try again.</Card>
+        <ErrorNotice error={state.error} />
       </>
     )
   }
@@ -64,7 +66,7 @@ export default function TodayPage() {
         <div className="today__evidence"><EvidenceList events={events} /></div>
         <div className="today__snapshot">
           <DevelopmentSnapshot
-            dimensions={task ? task.opportunities.map((o) => o.dimension) : signals.map((s) => s.dimension)}
+            dimensions={task && task.opportunities.length > 0 ? task.opportunities.map((o) => o.dimension) : [...DEVELOPMENT_DIMENSIONS]}
             signals={signals}
           />
         </div>

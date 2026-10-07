@@ -54,7 +54,8 @@ export interface Task {
   subject: string
   description: string
   status: TaskStatus
-  estimatedMinutes: number
+  /** Not every source provides an estimate; the UI shows effort only when it exists. */
+  estimatedMinutes?: number
   opportunities: DevelopmentOpportunity[]
 }
 
@@ -75,10 +76,11 @@ export interface Mission {
   id: string
   studentId: string
   taskId: string
+  /** The mission headline. When a source has only one instruction, this is that instruction. */
   title: string
-  whyItMatters: string
-  /** One small, concrete thing the student can do. */
-  action: string
+  whyItMatters?: string
+  /** One small, concrete thing the student can do, when it is separate from the title. */
+  action?: string
   dimension: DevelopmentDimension
   status: MissionStatus
 }
@@ -103,6 +105,9 @@ export interface MentorHint {
   taskId: string
   level: HintLevel
   content: string
+  /** How the server gave this guidance, e.g. 'reflective_prompt'. Shown to the student as a label. */
+  responseMode?: string
+  grantedAt?: string // ISO 8601
 }
 
 /**
@@ -139,6 +144,18 @@ export interface EvidenceEvent {
   hintLevel?: HintLevel
   /** Present on 'mission-completed' events. */
   missionId?: string
+}
+
+/** Evidence derived by the backend from observable events. Traceable to the events it rests on. */
+export interface EvidenceRecord {
+  id: string
+  studentId: string
+  taskId?: string
+  dimension: DevelopmentDimension
+  ruleId: string
+  summary: string
+  supportingEventIds: string[]
+  strength: 'insufficient' | 'emerging' | 'developing' | 'strengthening'
 }
 
 export type SignalTrend = 'improving' | 'stable' | 'emerging' | 'needs-attention'

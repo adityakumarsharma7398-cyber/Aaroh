@@ -27,11 +27,13 @@ export default function MissionCard({ mission, to, taskTitle }: Props) {
         <Badge tone="white">{DIMENSION_LABELS[mission.dimension]}</Badge>
       </div>
       <h2 className="section-title">{mission.title}</h2>
-      <p>{mission.whyItMatters}</p>
-      <div className="mission__action">
-        <strong>Small action</strong>
-        <p>{mission.action}</p>
-      </div>
+      {mission.whyItMatters && <p>{mission.whyItMatters}</p>}
+      {mission.action && (
+        <div className="mission__action">
+          <strong>Small action</strong>
+          <p>{mission.action}</p>
+        </div>
+      )}
       {taskTitle && <p className="note">From the task: {taskTitle}</p>}
       <Button to={to} variant={mission.status === 'completed' ? 'light' : 'action'} arrow>Open Mission</Button>
     </Card>

@@ -9,6 +9,7 @@ import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import TextArea from '../../components/ui/TextArea'
 import { studentRoutes } from '../../config/routes'
+import { actionMessage } from '../../lib/errors'
 import { missionService } from '../../services/missionService'
 import { useMissionData } from './studentData'
 
@@ -25,8 +26,8 @@ export default function MissionAttemptPage() {
     try {
       await missionService.recordAttempt(missionId, note)
       state.reload()
-    } catch {
-      setError('We could not record this action. Please try again.')
+    } catch (err) {
+      setError(actionMessage(err, 'We could not record this action. Please try again.'))
     } finally {
       setSaving(false)
     }
@@ -54,10 +55,12 @@ export default function MissionAttemptPage() {
             <PageHeader title="Record your action" description={mission.title} />
 
             <div className="mission-attempt">
-              <Card tone="softOrange">
-                <Badge tone="orange">The small action</Badge>
-                <p className="mission-detail__action">{mission.action}</p>
-              </Card>
+              {mission.action && (
+                <Card tone="softOrange">
+                  <Badge tone="orange">The small action</Badge>
+                  <p className="mission-detail__action">{mission.action}</p>
+                </Card>
+              )}
 
               {done ? (
                 <Card tone="success" big>

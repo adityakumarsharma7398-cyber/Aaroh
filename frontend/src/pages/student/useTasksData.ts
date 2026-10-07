@@ -1,5 +1,4 @@
 import { useAsyncData } from '../../hooks/useAsyncData'
-import { studentService } from '../../services/studentService'
 import { taskService } from '../../services/taskService'
 import type { Task } from '../../types/domain'
 
@@ -10,10 +9,9 @@ export interface TasksData {
 }
 
 async function loadTasks(): Promise<TasksData> {
-  const student = await studentService.getCurrentStudent()
   const [tasks, current] = await Promise.all([
-    taskService.listTasks(student.id),
-    taskService.getCurrentTask(student.id),
+    taskService.listMyTasks(),
+    taskService.getMyCurrentTask(),
   ])
   return { tasks, currentTaskId: current?.id }
 }

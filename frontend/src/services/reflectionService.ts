@@ -1,21 +1,32 @@
-// Service boundary (see taskService.ts). Currently backed by the mock backend.
-// Reflections are stored as typed data only; no analysis happens in the frontend.
-import { recordReflection } from '../data/mock/mockBackend'
-import { REFLECTION_PROMPTS } from '../data/mock/mockContent'
-import { copy, db } from '../data/mock/store'
+// Service boundary (see studentService.ts). REAL (current student), except the prompts, which are static UI content.
+import { REFLECTION_PROMPTS } from '../content/reflection'
 import type { Reflection, ReflectionAnswer } from '../types/domain'
+import { apiClient } from './apiClient'
+import { mapReflection } from './contracts/mappers'
+
+const reflectionPath = (taskId: string) => `/tasks/${encodeURIComponent(taskId)}/reflection`
 
 export const reflectionService = {
-  /** Prompts for a task. The backend may personalise these later. */
-  async getPrompts(taskId: string): Promise<string[]> {
-    return db.tasks.some((t) => t.id === taskId) ? [...REFLECTION_PROMPTS] : []
+  /** Static: the backend does not serve prompts; it stores each answer together with the prompt it answered. */
+  async getPrompts(): Promise<string[]> {
+    return [...REFLECTION_PROMPTS]
   },
 
+  /** GET /tasks/:taskId/reflection. Undefined when the student has not reflected on this task. */
   async getReflection(taskId: string): Promise<Reflection | undefined> {
-    return copy(db.reflections.find((r) => r.taskId === taskId))
+    return apiClient.get(reflectionPath(taskId), { parse: mapReflection })
   },
 
+  /** POST /tasks/:taskId/reflection { answers }. The backend records a `reflection` event. */
   async submitReflection(taskId: string, answers: ReflectionAnswer[]): Promise<Reflection> {
-    return recordReflection(taskId, answers)
+    const saved = await apiClient.post(reflectionPath(taskId), {
+      body: { answers },
+      parse: (d) => {
+        const reflection = mapReflection(d)
+        if (!reflection) throw new Error('reflection: empty response')
+        return reflection
+      },
+    })
+    return saved
   },
 }
