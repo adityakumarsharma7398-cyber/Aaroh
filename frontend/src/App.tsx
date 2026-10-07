@@ -27,15 +27,21 @@ import SignalsPage from './pages/teacher/SignalsPage'
 import EvidencePage from './pages/teacher/EvidencePage'
 
 // Public routes live inside PublicLayout. /how-it-works, /about, /login and /signup
-// are linked from the navbar and will be added there as <Route>s.
-// Application areas use AppShell via their own layout routes. No auth guard yet.
+// route into the application and landing page.
 export default function App() {
   return (
     <Routes>
       <Route element={<PublicLayout />}>
         <Route index element={<LandingPage />} />
-        <Route path="*" element={<NotFound />} />
+        <Route path="/how-it-works" element={<LandingPage />} />
+        <Route path="/about" element={<LandingPage />} />
+        <Route path="/login" element={<Navigate to="/student/today" replace />} />
+        <Route path="/signup" element={<Navigate to="/student/today" replace />} />
       </Route>
+
+      <Route path="/today" element={<Navigate to="/student/today" replace />} />
+      <Route path="/tasks" element={<Navigate to="/student/tasks" replace />} />
+      <Route path="/growth" element={<Navigate to="/student/growth" replace />} />
 
       <Route path="/student" element={<StudentLayout />}>
         <Route index element={<Navigate to="today" replace />} />
@@ -69,6 +75,8 @@ export default function App() {
         <Route path="evidence" element={<EvidencePage />} />
         <Route path="*" element={<TeacherNotFoundPage />} />
       </Route>
+
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }

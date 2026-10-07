@@ -150,6 +150,6 @@ const env = (import.meta as { env?: Record<string, string | undefined> }).env
 
 /** Shared default client, configured from the environment. */
 export const apiClient = createApiClient({
-  baseUrl: env?.VITE_API_BASE_URL || 'http://localhost:3001/api',
+  baseUrl: env?.VITE_API_BASE_URL || 'https://aaroh-backend-tuf5.onrender.com/api',
   authToken: env?.VITE_DEV_AUTH_TOKEN || 'student-maya',
 })
