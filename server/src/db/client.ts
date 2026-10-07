@@ -15,6 +15,8 @@ export const client = createClient({
 // Isolated Drizzle ORM instance
 export const db = drizzle(client, { schema });
 
+import { ensureTablesExist } from "./init";
+
 /**
  * Initializes database check and verifies connectivity.
  * Isolates the SQLite connection so the underlying DB can be swapped easily.
@@ -23,6 +25,7 @@ export async function checkDatabaseConnection(): Promise<{ ok: boolean; dialect:
   try {
     // Ensure foreign key constraints are strictly enforced in SQLite
     await client.execute("PRAGMA foreign_keys = ON;");
+    await ensureTablesExist();
     const result = await client.execute("SELECT 1 AS ready");
     const isReady = result.rows.length > 0;
     return {

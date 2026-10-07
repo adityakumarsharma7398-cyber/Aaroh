@@ -1,5 +1,6 @@
 import path from "node:path";
 import { db } from "../db/client";
+import { ensureTablesExist } from "../db/init";
 import { profiles, tasks, missions, events, evidence } from "../db/schema";
 import { generateEvidence, persistEvidence } from "../engine/evidence";
 import { inArray } from "drizzle-orm";
@@ -405,6 +406,9 @@ export async function seedDatabase(): Promise<{
   evidenceCount: number;
 }> {
   console.log("[Seed] Starting idempotent database seeding...");
+
+  // 0. Ensure schema tables and indexes exist on fresh deployments
+  await ensureTablesExist();
 
   // 1. Clean existing seed records in reverse foreign-key order
   await db.delete(evidence).where(inArray(evidence.studentId, [...SEED_PROFILE_IDS]));
