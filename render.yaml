@@ -9,3 +9,5 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: AI_BASE_URL
+        value: https://aaroh-ai.vercel.app

@@ -267,10 +267,51 @@ export class HintService {
     }
 
     // Determine hint content
-    const taskHints = TASK_SPECIFIC_HINTS[taskId];
-    const { content, mode } = taskHints && taskHints[nextLevel]
-      ? taskHints[nextLevel]
-      : generateContextualHint(task.title, task.subject, nextLevel);
+    let content = "";
+    let mode: ResponseMode = "conceptual_hint";
+
+    const aiBaseUrl = process.env.AI_BASE_URL || process.env.AI_SERVICE_URL;
+    if (aiBaseUrl && nextLevel > 0) {
+      try {
+        const aiResponse = await fetch(`${aiBaseUrl.replace(/\/+$/, "")}/api/ai/mentor`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            task: `${task.title} - ${task.description || task.subject}`,
+            attempt: attemptDescription || "",
+            hintLevel: nextLevel,
+            dimension: "problem_solving",
+          }),
+          signal: AbortSignal.timeout(4000),
+        });
+        if (aiResponse.ok) {
+          const aiJson = (await aiResponse.json()) as { data?: { response?: string } };
+          if (aiJson?.data?.response) {
+            content = aiJson.data.response;
+            const modeMap: Record<HintLevel, ResponseMode> = {
+              0: "independent_thinking_pushback",
+              1: "reflective_prompt",
+              2: "conceptual_hint",
+              3: "structured_guidance",
+              4: "worked_example",
+              5: "direct_solution",
+            };
+            mode = modeMap[nextLevel] || "conceptual_hint";
+          }
+        }
+      } catch {
+        // Graceful fallback to pre-authored/deterministic hint
+      }
+    }
+
+    if (!content) {
+      const taskHints = TASK_SPECIFIC_HINTS[taskId];
+      const fallback = taskHints && taskHints[nextLevel]
+        ? taskHints[nextLevel]
+        : generateContextualHint(task.title, task.subject, nextLevel);
+      content = fallback.content;
+      mode = fallback.mode;
+    }
 
     // Record authoritative hint_level_granted event
     const grantedEvent = await recordEvent({
