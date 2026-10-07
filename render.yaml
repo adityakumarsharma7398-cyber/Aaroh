@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: aaroh-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm --workspace=@education-growth/server run seed
+    startCommand: npm --workspace=@education-growth/server run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production

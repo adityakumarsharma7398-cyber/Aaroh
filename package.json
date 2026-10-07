@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "dev:server": "npm --workspace=@education-growth/server run dev",
+    "start:server": "npm --workspace=@education-growth/server run start",
     "dev:client": "npm --workspace=@education-growth/client run dev",
     "build": "npm --workspace=@education-growth/shared run build && npm --workspace=@education-growth/server run build && npm --workspace=@education-growth/client run build",
     "typecheck": "npm --workspace=@education-growth/shared run typecheck && npm --workspace=@education-growth/server run typecheck && npm --workspace=@education-growth/client run typecheck",
@@ -19,6 +20,7 @@
     "verify:evidence": "npm --workspace=@education-growth/server run verify:evidence",
     "verify:signals": "npm --workspace=@education-growth/server run verify:signals",
     "verify:seed": "npm --workspace=@education-growth/server run verify:seed",
+    "verify:api": "npm --workspace=@education-growth/server run verify:api",
     "dev:frontend": "npm --prefix frontend run dev",
     "typecheck:frontend": "npm --prefix frontend run typecheck",
     "lint:frontend": "npm --prefix frontend run lint",

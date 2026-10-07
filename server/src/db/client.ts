@@ -3,12 +3,13 @@ import { drizzle } from "drizzle-orm/libsql";
 import path from "node:path";
 import * as schema from "./schema";
 
-const rawDbPath = process.env.DATABASE_PATH || path.resolve(process.cwd(), "data.db");
-const dbUrl = rawDbPath.startsWith("file:") ? rawDbPath : `file:${rawDbPath}`;
+const rawDbPath = process.env.DATABASE_URL || process.env.DATABASE_PATH || path.resolve(process.cwd(), "data.db");
+const dbUrl = rawDbPath.startsWith("file:") || rawDbPath.startsWith("libsql:") || rawDbPath.startsWith("http:") || rawDbPath.startsWith("https:") ? rawDbPath : `file:${rawDbPath}`;
 
 // Isolated database client connection
 export const client = createClient({
   url: dbUrl,
+  authToken: process.env.DATABASE_AUTH_TOKEN,
 });
 
 // Isolated Drizzle ORM instance

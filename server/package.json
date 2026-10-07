@@ -14,21 +14,22 @@
     "verify:events": "tsx src/events/verify.ts",
     "verify:evidence": "tsx src/engine/verify.ts",
     "verify:signals": "tsx src/engine/verify_signals.ts",
-    "verify:seed": "tsx src/seeds/verify_seed.ts"
+    "verify:seed": "tsx src/seeds/verify_seed.ts",
+    "verify:api": "tsx src/routes/verify_api.ts"
   },
   "dependencies": {
     "@education-growth/shared": "*",
     "@libsql/client": "^0.14.0",
     "cors": "^2.8.5",
     "drizzle-orm": "^0.39.3",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "tsx": "^4.19.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.0",
     "drizzle-kit": "^0.30.4",
-    "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }
 }
