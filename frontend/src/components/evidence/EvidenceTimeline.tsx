@@ -1,68 +1,128 @@
 import { Link } from 'react-router-dom'
-import { DIMENSION_LABELS, EVIDENCE_EVENT_TONES } from '../../content/labels'
+import Card from '../ui/Card'
+import Badge from '../ui/Badge'
 import { studentRoutes } from '../../config/routes'
-import { describeEvent, groupByDay } from '../../lib/evidence'
-import { formatClock, formatEventTime } from '../../lib/format'
+import { DIMENSION_LABELS, EVIDENCE_EVENT_LABELS, HINT_LEVEL_NAMES } from '../../content/labels'
+import { formatClock, formatShortDate } from '../../lib/format'
 import type { DevelopmentDimension, EvidenceEvent } from '../../types/domain'
 
-type Props = {
-  /** Already ordered by the caller. */
+interface Props {
   events: EvidenceEvent[]
-  /** Task titles by task id, to say which task each action belongs to. */
   taskTitles?: Record<string, string>
-  /** Signals each event contributes to, by event id. Shows the Action → Evidence → Signal link. */
-  dimensionsByEvent?: Record<string, DevelopmentDimension[]>
-  /** Group under a heading per calendar day. */
-  grouped?: boolean
+  title?: string
+  limit?: number
   emptyText?: string
+  grouped?: boolean
+  dimensionsByEvent?: Record<string, DevelopmentDimension[]>
+}
+
+function iconForEvent(type: EvidenceEvent['type']): string {
+  switch (type) {
+    case 'attempt-created':
+      return '✏️'
+    case 'hint-requested':
+      return '💡'
+    case 'retry':
+      return '🔄'
+    case 'feedback-applied':
+      return '⚡'
+    case 'task-completed':
+      return '✅'
+    case 'reflection-added':
+      return '💭'
+    case 'mission-completed':
+      return '🎯'
+    default:
+      return '📌'
+  }
 }
 
 export default function EvidenceTimeline({
   events,
-  taskTitles,
-  dimensionsByEvent,
-  grouped,
-  emptyText = 'No actions recorded yet.',
+  taskTitles = {},
+  title = 'Observable Action Timeline',
+  limit,
+  emptyText,
+  dimensionsByEvent = {},
 }: Props) {
-  if (events.length === 0) return <p className="note">{emptyText}</p>
+  const displayEvents = limit ? events.slice(0, limit) : events
 
-  const groups = grouped ? groupByDay(events) : [{ key: 'all', label: '', events }]
+  if (displayEvents.length === 0) {
+    return (
+      <Card big className="timeline-empty">
+        <Badge tone="yellow">Action History</Badge>
+        <h3>No actions recorded yet</h3>
+        <p className="lead">
+          {emptyText ||
+            'Observable evidence starts forming automatically as you submit attempts, ask the Socratic mentor, and complete challenge tasks.'}
+        </p>
+      </Card>
+    )
+  }
 
   return (
-    <div className="evt">
-      {groups.map((group) => (
-        <section key={group.key} aria-label={group.label || undefined}>
-          {group.label && <h3 className="evt__day">{group.label}</h3>}
-          <ol className="evt__list">
-            {group.events.map((e) => {
-              const dims = dimensionsByEvent?.[e.id]
-              return (
-                <li key={e.id} className="evt__item">
-                  <span className={`evt__dot evt__dot--${EVIDENCE_EVENT_TONES[e.type]}`} aria-hidden="true" />
-                  <div className="evt__body">
-                    <p className="evt__text">{describeEvent(e)}</p>
-                    <p className="evt__meta">
-                      {taskTitles?.[e.taskId] && <span>{taskTitles[e.taskId]} · </span>}
-                      <time dateTime={e.occurredAt}>{grouped ? formatClock(e.occurredAt) : formatEventTime(e.occurredAt)}</time>
-                    </p>
-                    {dims && dims.length > 0 && (
-                      <p className="evt__signals">
-                        Contributes to:{' '}
-                        {dims.map((d, i) => (
-                          <span key={d}>
-                            {i > 0 && ', '}
-                            <Link to={studentRoutes.growthDimension(d)}>{DIMENSION_LABELS[d]}</Link>
-                          </span>
-                        ))}
-                      </p>
+    <Card big tone="white" className="evidence-timeline-card">
+      <div className="timeline-header">
+        <div>
+          <Badge tone="blue">Observable Evidence</Badge>
+          <h3 className="timeline-title">{title}</h3>
+        </div>
+        <span className="timeline-count">{events.length} actions logged</span>
+      </div>
+
+      <div className="timeline-track">
+        {displayEvents.map((event, index) => {
+          const taskTitle = taskTitles[event.taskId] || (event.taskId ? `Task #${event.taskId}` : undefined)
+          const isLatest = index === 0
+          const dimensions = dimensionsByEvent[event.id] || []
+
+          return (
+            <div key={event.id} className={`timeline-node ${isLatest ? 'timeline-node--latest' : ''}`}>
+              <div className="timeline-node__marker">
+                <span className="timeline-node__icon">{iconForEvent(event.type)}</span>
+                {index < displayEvents.length - 1 && <div className="timeline-node__line" />}
+              </div>
+
+              <div className="timeline-node__body">
+                <div className="timeline-node__top">
+                  <div className="timeline-node__headline">
+                    <strong>{EVIDENCE_EVENT_LABELS[event.type] || event.type}</strong>
+                    {event.hintLevel !== undefined && (
+                      <Badge tone="yellow" className="timeline-node__hint-badge">
+                        {HINT_LEVEL_NAMES[event.hintLevel] || `Level ${event.hintLevel}`}
+                      </Badge>
                     )}
                   </div>
-                </li>
-              )
-            })}
-          </ol>
-        </section>
-      ))}
-    </div>
+                  <time className="timeline-node__time" dateTime={event.occurredAt}>
+                    {formatShortDate(event.occurredAt)} at {formatClock(event.occurredAt)}
+                  </time>
+                </div>
+
+                {taskTitle && (
+                  <div className="timeline-node__context">
+                    <span className="timeline-node__context-label">Academic Context:</span>{' '}
+                    <Link to={studentRoutes.task(event.taskId)} className="timeline-node__task-link">
+                      {taskTitle} →
+                    </Link>
+                  </div>
+                )}
+
+                {dimensions.length > 0 && (
+                  <div className="timeline-node__dimensions" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
+                    {dimensions.map((dim) => (
+                      <Link key={dim} to={studentRoutes.growthDimension(dim)}>
+                        <Badge tone="white" className="timeline-node__dim-badge">
+                          {DIMENSION_LABELS[dim]}
+                        </Badge>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </Card>
   )
 }

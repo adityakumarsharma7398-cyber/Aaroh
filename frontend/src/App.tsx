@@ -26,8 +26,9 @@ import ActivitiesPage from './pages/teacher/ActivitiesPage'
 import SignalsPage from './pages/teacher/SignalsPage'
 import EvidencePage from './pages/teacher/EvidencePage'
 
-// Public routes live inside PublicLayout. /how-it-works, /about, /login and /signup
-// route into the application and landing page.
+import DemoEntryPage from './pages/public/DemoEntryPage'
+
+// Public routes live inside PublicLayout. /login, /signup and /demo route into DemoEntryPage.
 export default function App() {
   return (
     <Routes>
@@ -35,8 +36,9 @@ export default function App() {
         <Route index element={<LandingPage />} />
         <Route path="/how-it-works" element={<LandingPage />} />
         <Route path="/about" element={<LandingPage />} />
-        <Route path="/login" element={<Navigate to="/student/today" replace />} />
-        <Route path="/signup" element={<Navigate to="/student/today" replace />} />
+        <Route path="/login" element={<DemoEntryPage />} />
+        <Route path="/signup" element={<DemoEntryPage />} />
+        <Route path="/demo" element={<DemoEntryPage />} />
       </Route>
 
       <Route path="/today" element={<Navigate to="/student/today" replace />} />
@@ -70,6 +72,7 @@ export default function App() {
         <Route path="overview" element={<OverviewPage />} />
         <Route path="students" element={<StudentsPage />} />
         <Route path="students/:studentId" element={<StudentDetailPage />} />
+        <Route path="students/detail/:id" element={<StudentDetailPage />} />
         <Route path="activities" element={<ActivitiesPage />} />
         <Route path="signals" element={<SignalsPage />} />
         <Route path="evidence" element={<EvidencePage />} />
